@@ -1,6 +1,7 @@
-/* Simple Task Bar
-   Copyright fthx 2020
+/* Minimize-shelf
+   Copyright etenil 2020
    License: GPL v3
+   Contains some code from Simple Task Bar extension by fthx
    Contains some code from All Windows extension by lyonel
 */
 
@@ -45,80 +46,28 @@ const WindowList = new Lang.Class({
         this.tracker = Shell.WindowTracker.get_default();
         this.workspaces_count = global.workspace_manager.get_n_workspaces();
 
-        for ( let workspace_index = 0; workspace_index < this.workspaces_count; ++workspace_index ) {
-        
-            let metaWorkspace = global.workspace_manager.get_workspace_by_index(workspace_index);
-            this.windows = metaWorkspace.list_windows();
-            this.windows = global.display.sort_windows_by_stacking(this.windows);
-            
-            if (workspace_index==0) {
-            	this.sticky_windows = this.windows.filter(
-            		function(w) {
-                		return !w.is_skip_taskbar() && w.is_on_all_workspaces();
-            		}
-            	);
-                for ( let i = 0; i < this.sticky_windows.length; ++i ) {
-                    let metaWindow = this.sticky_windows[i];
-					this.box = new St.Bin({visible: true, 
-        							reactive: true, can_focus: true, track_hover: true});
-					this.box.window = this.sticky_windows[i];
-					this.app = this.tracker.get_window_app(this.box.window);
-                	this.box.connect('button-press-event', Lang.bind(this, function() {
-                							this._activateWindow(metaWorkspace, metaWindow); } ));
-                	this.box.icon = this.app.create_icon_texture(ICON_SIZE);
-                	if (metaWindow.is_hidden()) {
-                		this.box.icon.set_opacity(HIDDEN_OPACITY); this.box.style_class = 'hidden-app';
-                	}
-                	else {
-                	 	if (metaWindow.has_focus()) {this.box.style_class = 'focused-app';}
-                	 	else {this.box.style_class = 'unfocused-app';}
-                	};
-               		this.box.set_child(this.box.icon);
-                	this.apps_menu.add_actor(this.box);
-                }
-            };
-            
-        	this.ws_box = new St.Bin({visible: true, 
-    						reactive: true, can_focus: true, track_hover: true});
-    		this.ws_box.label = new St.Label({y_align: Clutter.ActorAlign.CENTER});
-        	if (global.workspace_manager.get_active_workspace() === metaWorkspace) {
-    			this.ws_box.label.style_class = 'desk-label-active';
-    		}
-    		else {
-    			this.ws_box.label.style_class = 'desk-label-inactive';
-    		};
-    		this.ws_box.label.set_text((" "+(workspace_index+1)+" ").toString());
-    		this.ws_box.set_child(this.ws_box.label);
-    		this.ws_box.connect('button-press-event', Lang.bind(this, function() {
-            							this._activateWorkspace(metaWorkspace); } ));
-            this.apps_menu.add_actor(this.ws_box);
+		let workspace = global.workspace_manager.get_active_workspace();
+		this.windows = workspace.list_windows();
         	
-        	this.windows = this.windows.filter(
-            	function(w) {
-                	return !w.is_skip_taskbar() && !w.is_on_all_workspaces();
-               	}
-            );
+		this.windows = this.windows.filter(
+			function(w) {
+				return w.minimized;
+			}
+		);
 
-            for ( let i = 0; i < this.windows.length; ++i ) {
-	            let metaWindow = this.windows[i];
-	            this.box = new St.Bin({visible: true, 
-        						reactive: true, can_focus: true, track_hover: true});
-	            this.box.window = this.windows[i];
-	            this.app = this.tracker.get_window_app(this.box.window);
-                this.box.connect('button-press-event', Lang.bind(this, function() {
-                							this._activateWindow(metaWorkspace, metaWindow); } ));
-                this.box.icon = this.app.create_icon_texture(ICON_SIZE);
-                if (metaWindow.is_hidden()) {
-                	this.box.icon.set_opacity(HIDDEN_OPACITY); this.box.style_class = 'hidden-app';
-                }
-                else {
-                	 if (metaWindow.has_focus()) {this.box.style_class = 'focused-app';}
-                	 else {this.box.style_class = 'unfocused-app';}
-                };
-               	this.box.set_child(this.box.icon);
-                this.apps_menu.add_actor(this.box);
-            }
-        }
+		for ( let i = 0; i < this.windows.length; ++i ) {
+			let metaWindow = this.windows[i];
+			this.box = new St.Bin({visible: true, 
+							reactive: true, can_focus: true, track_hover: true});
+			this.box.window = this.windows[i];
+			this.app = this.tracker.get_window_app(this.box.window);
+			this.box.connect('button-press-event', Lang.bind(this, function() {
+										this._activateWindow(workspace, metaWindow); } ));
+			this.box.icon = this.app.create_icon_texture(ICON_SIZE);
+			this.box.style_class = 'focused-app';
+			this.box.set_child(this.box.icon);
+			this.apps_menu.add_actor(this.box);
+		}
     },
     
     _activateWorkspace: function(ws) {
@@ -159,10 +108,7 @@ function init() {
 
 function enable() {
 	windowlist = new WindowList;
-    let position = 1;
-    if ('places-menu' in Main.panel.statusArea)
-        position++;
-    Main.panel._leftBox.insert_child_at_index(windowlist.actor, position);
+    Main.panel._rightBox.insert_child_at_index(windowlist.actor, 1);
 
 }
 

@@ -1,7 +1,6 @@
-# simple-task-bar
-https://extensions.gnome.org/extension/2672/simple-task-bar/
+# minimize-shelf
 
-Very light task bar extension for GNOME Shell.
+A very light gnome-shell extension that displays the minimized windows of the
+current workspace only. They are shown as icons near the wifi, sound etc area.
 
-There are two versions : one for GNOME Shell 3.28, one for 3.30 -> 3.36.
-In this repository you will find the second one. You can download 3.28 version through the above link to GS extension website.
+![Screenshot](/img/screenshot.png?raw=true)
