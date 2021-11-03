@@ -1,0 +1,13 @@
+name: Lint extension
+on: [push]
+jobs:
+  lint-files:
+    name: Lint extension files
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install modules
+      run: npm install -g eslint
+    - name: Lint
+      run: DEBUG=eslint:cli-engine eslint . --ext .js
