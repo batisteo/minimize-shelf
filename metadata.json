@@ -7,9 +7,10 @@
     "3.34",
     "3.36",
     "40",
-    "41"
+    "41",
+    "42"
   ],
-  "url": "https://github.com/Etenil/minimize-shelf",
+  "url": "https://github.com/batisteo/minimize-shelf",
   "uuid": "minimize-shelf@etenil",
-  "version": 5
+  "version": 6
 }
