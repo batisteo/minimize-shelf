@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+
+  <enum id="org.gnome.shell.extensions.minimize-shelf.direction">
+    <value value="0" nick="Left" />
+    <value value="1" nick="Right" />
+  </enum>
+
+  <schema id="org.gnome.shell.extensions.minimize-shelf" path="/org/gnome/shell/extensions/minimize-shelf/">
+
+    <key name="direction" enum="org.gnome.shell.extensions.minimize-shelf.direction">
+      <default>"Right"</default>
+    </key>
+
+  </schema>
+</schemalist>
+

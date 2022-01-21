@@ -6,7 +6,8 @@
    Contains some code from All Windows extension by lyonel
 */
 
-const { St, Shell, GObject } = imports.gi;
+const { Gio, GObject, St, Shell } = imports.gi;
+const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 
 const ICON_SIZE = 22;
@@ -108,13 +109,40 @@ const WindowList = GObject.registerClass(
     }
 );
 
+function getSettings() {
+    let GioSSS = Gio.SettingsSchemaSource;
+    let schemaSource = GioSSS.new_from_directory(
+        Me.dir.get_child('schemas').get_path(),
+        GioSSS.get_default(),
+        false
+    );
+    let schemaObj = schemaSource.lookup(
+        'org.gnome.shell.extensions.minimize-shelf',
+        true
+    );
+    if (!schemaObj) {
+        throw new Error('Minimize-shelf: cannot find schemas');
+    }
+    return new Gio.Settings({ settings_schema: schemaObj });
+}
+
 let windowlist;
 
 function init() {}
 
 function enable() {
+    let settings = getSettings();
+
+    const direction = settings.get_enum('direction') === 0 ? 'LEFT' : 'RIGHT';
+    const box = {
+        LEFT: Main.panel._leftBox,
+        RIGHT: Main.panel._rightBox,
+    }[direction];
+    const index = { LEFT: -1, RIGHT: 1 }[direction];
+
     windowlist = new WindowList();
-    Main.panel._rightBox.insert_child_at_index(windowlist.actor, 1);
+
+    box.insert_child_at_index(windowlist.actor, index);
 }
 
 function disable() {
