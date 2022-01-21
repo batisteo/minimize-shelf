@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    "prettier",
+    "gjs"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:gjs/extension",
+    "plugin:prettier/recommended"
+  ],
+  "env": {
+    "gjs/application": true,
+    "gjs/cairo": true,
+    "gjs/girepository": true
+  },
+  "rules": {
+    "object-curly-spacing": ["error", "always"]
+  }
+}
