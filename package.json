@@ -1,6 +1,6 @@
 {
   "name": "minimize-shelf",
-  "version": "7",
+  "version": "8",
   "scripts": {
     "lint": "eslint"
   },

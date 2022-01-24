@@ -12,10 +12,13 @@ const Main = imports.ui.main;
 
 const ICON_SIZE = 22;
 
+const settings = Me.imports.utils.settings.getSettings();
+
 const WindowList = GObject.registerClass(
     { GTypeName: 'WindowList' },
     class WindowList extends GObject.Object {
-        _init() {
+        _init(params) {
+            this.direction = params.direction;
             this.apps_menu = new St.BoxLayout({});
             this.actor = this.apps_menu;
             this._updateMenu();
@@ -106,43 +109,29 @@ const WindowList = GObject.registerClass(
             this._updateMenu();
             this.parent(actor, event);
         }
+
+        _insert() {
+            const box = Main.panel[`_${this.direction}Box`];
+            const index = { left: -1, right: 1 }[this.direction];
+            box.insert_child_at_index(this.actor, index);
+        }
     }
 );
 
-function getSettings() {
-    let GioSSS = Gio.SettingsSchemaSource;
-    let schemaSource = GioSSS.new_from_directory(
-        Me.dir.get_child('schemas').get_path(),
-        GioSSS.get_default(),
-        false
-    );
-    let schemaObj = schemaSource.lookup(
-        'org.gnome.shell.extensions.minimize-shelf',
-        true
-    );
-    if (!schemaObj) {
-        throw new Error('Minimize-shelf: cannot find schemas');
-    }
-    return new Gio.Settings({ settings_schema: schemaObj });
-}
-
 let windowlist;
 
-function init() {}
+function init() {
+    settings.connect('changed', () => {
+        disable();
+        enable();
+    });
+}
 
 function enable() {
-    let settings = getSettings();
-
-    const direction = settings.get_enum('direction') === 0 ? 'LEFT' : 'RIGHT';
-    const box = {
-        LEFT: Main.panel._leftBox,
-        RIGHT: Main.panel._rightBox,
-    }[direction];
-    const index = { LEFT: -1, RIGHT: 1 }[direction];
-
-    windowlist = new WindowList();
-
-    box.insert_child_at_index(windowlist.actor, index);
+    windowlist = new WindowList({
+        direction: settings.get_enum('direction') === 0 ? 'left' : 'right',
+    });
+    windowlist._insert();
 }
 
 function disable() {
