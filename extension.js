@@ -9,6 +9,7 @@
 const { Gio, GObject, St, Shell } = imports.gi;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
+const Meta = imports.gi.Meta;
 
 const ICON_SIZE = 22;
 
@@ -18,9 +19,10 @@ const WindowList = GObject.registerClass(
     { GTypeName: 'WindowList' },
     class WindowList extends GObject.Object {
         _init(params) {
-            this.direction = params.direction;
+            this.direction = params.direction; // 'left' | 'right'
             this.apps_menu = new St.BoxLayout({});
             this.actor = this.apps_menu;
+
             this._updateMenu();
             this._restacked = global.display.connect(
                 'restacked',
@@ -62,26 +64,45 @@ const WindowList = GObject.registerClass(
             let workspace = global.workspace_manager.get_active_workspace();
             this.windows = workspace.list_windows();
 
-            this.windows = this.windows.filter(w => w.minimized);
+            for (let meta_window of this.windows) {
+                meta_window.set_icon_geometry(
+                    this._animationAnchorArea(workspace)
+                );
+            }
 
-            for (let i = 0; i < this.windows.length; ++i) {
-                let metaWindow = this.windows[i];
+            for (let meta_window of this.windows.filter(w => w.minimized)) {
                 this.box = new St.Bin({
                     visible: true,
                     reactive: true,
                     can_focus: true,
                     track_hover: true,
                 });
-                this.box.window = this.windows[i];
+                this.box.window = meta_window;
                 this.app = this.tracker.get_window_app(this.box.window);
                 this.box.connect('button-press-event', () => {
-                    this._activateWindow(workspace, metaWindow);
+                    this._activateWindow(workspace, meta_window);
                 });
                 this.box.icon = this.app.create_icon_texture(ICON_SIZE);
                 this.box.style_class = 'focused-app';
                 this.box.set_child(this.box.icon);
                 this.apps_menu.add_actor(this.box);
             }
+        }
+
+        _animationAnchorArea(ws) {
+            const width = ws.get_display().get_size()[0];
+            // Some arbitrary values in pixels because I can’t figure out
+            // how to get the apps_menu position
+            const anchor = this.direction === 'left' ? 200 : width - 150;
+            if (this.area?.x !== anchor)
+                // Avoid creating too much rectangles
+                this.area = new Meta.Rectangle({
+                    x: anchor,
+                    y: 0,
+                    width: ICON_SIZE,
+                    height: ICON_SIZE,
+                });
+            return this.area;
         }
 
         _activateWorkspace(ws) {
