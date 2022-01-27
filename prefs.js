@@ -3,14 +3,13 @@ const GObject = imports.gi.GObject;
 const Gtk = imports.gi.Gtk;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-
-const settings = Me.imports.utils.settings.getSettings();
 const Direction = Me.imports.utils.settings.Direction;
 
 const _toggle_direction = widget => {
-    if (widget.get_active())
-        settings.set_enum('direction', Direction[widget.label]);
+    if (widget.get_active()) Side.save(Side[widget.label]);
 };
+
+let Side;
 
 const PrefsWidget = GObject.registerClass(
     class PrefsWidget extends Gtk.Box {
@@ -24,26 +23,31 @@ const PrefsWidget = GObject.registerClass(
             this.set_margin_end(margin_side);
 
             const label = new Gtk.Label({ label: 'Panel side' });
-            const toggle_left = Gtk.ToggleButton.new_with_label('Left');
-            const toggle_right = Gtk.ToggleButton.new_with_label('Right');
+            const TOGGLES = {
+                [Side.Left]: Gtk.ToggleButton.new_with_label(
+                    Side.label(Side.Left)
+                ),
+                [Side.Right]: Gtk.ToggleButton.new_with_label(
+                    Side.label(Side.Right)
+                ),
+            };
 
-            toggle_left.connect('toggled', _toggle_direction);
-            toggle_right.connect('toggled', _toggle_direction);
-            toggle_right.set_group(toggle_left);
+            TOGGLES[Side.Left].connect('toggled', _toggle_direction);
+            TOGGLES[Side.Right].connect('toggled', _toggle_direction);
+            TOGGLES[Side.Right].set_group(TOGGLES[Side.Left]);
 
-            (settings.get_enum('direction') === Direction.Left
-                ? toggle_left
-                : toggle_right
-            ).set_active(true);
+            TOGGLES[Side.value].set_active(true);
 
             this.append(label);
-            this.append(toggle_left);
-            this.append(toggle_right);
+            this.append(TOGGLES[Side.Left]);
+            this.append(TOGGLES[Side.Right]);
         }
     }
 );
 
-function init() {}
+function init() {
+    Side = new Direction().load();
+}
 
 function buildPrefsWidget() {
     return new PrefsWidget({ margin_top: 200, margin_side: 160 });

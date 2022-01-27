@@ -7,19 +7,20 @@
 */
 
 const { Gio, GObject, St, Shell } = imports.gi;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Direction = Me.imports.utils.settings.Direction;
 
 const ICON_SIZE = 22;
 
-const settings = Me.imports.utils.settings.getSettings();
+let Side;
 
 const WindowList = GObject.registerClass(
     { GTypeName: 'WindowList' },
     class WindowList extends GObject.Object {
-        _init(params) {
-            this.direction = params.direction; // 'left' | 'right'
+        _init(side) {
+            this.side = side;
             this.apps_menu = new St.BoxLayout({});
             this.actor = this.apps_menu;
 
@@ -93,7 +94,7 @@ const WindowList = GObject.registerClass(
             const width = ws.get_display().get_size()[0];
             // Some arbitrary values in pixels because I can’t figure out
             // how to get the apps_menu position
-            const anchor = this.direction === 'left' ? 200 : width - 150;
+            const anchor = this.side.anchor(width);
             if (this.area?.x !== anchor)
                 // Avoid creating too much rectangles
                 this.area = new Meta.Rectangle({
@@ -132,29 +133,33 @@ const WindowList = GObject.registerClass(
         }
 
         _insert() {
-            const box = Main.panel[`_${this.direction}Box`];
-            const index = { left: -1, right: 1 }[this.direction];
-            box.insert_child_at_index(this.actor, index);
+            const box = Main.panel[this.side.box];
+            box.insert_child_at_index(this.actor, this.side.index);
         }
     }
 );
 
-let windowlist;
+class Extension {
+    constructor() {}
+
+    enable() {
+        Side = new Direction().load();
+        this.eventhandler = Side.settings.connect('changed', this._reload);
+
+        this.windowlist = new WindowList(Side);
+        this.windowlist._insert();
+    }
+
+    disable() {
+        Side.settings.disconnect(this.eventhandler);
+        this.windowlist._destroy();
+    }
+
+    _reload() {
+        Main.extensionManager.reloadExtension(Me);
+    }
+}
 
 function init() {
-    settings.connect('changed', () => {
-        disable();
-        enable();
-    });
-}
-
-function enable() {
-    windowlist = new WindowList({
-        direction: settings.get_enum('direction') === 0 ? 'left' : 'right',
-    });
-    windowlist._insert();
-}
-
-function disable() {
-    windowlist._destroy();
+    return new Extension();
 }
